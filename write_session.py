@@ -3,10 +3,16 @@
 import boto3
 from os import environ
 import argparse
+import logging
 from logging import info,error,warning
 
-logging.basicConfig(level='logging.DEBUG')
+logging.basicConfig(level=logging.DEBUG)
 
+
+if environ.get('AWS_PROFILE'):
+    warning("env AWS_PROFILE is set (use -p to override)")
+
+def_profile = environ['AWS_PROFILE'] if "AWS_PROFILE" in environ else "awsops"
 
 parser = argparse.ArgumentParser(
         description='''Rewrites config state in ~/.aws/ files
@@ -14,21 +20,14 @@ parser = argparse.ArgumentParser(
         epilog="More details in README.md file"
         )
 
-
-parser.add_argument('mfacode')
-
-if environ.get('AWS_PROFILE'):
-    warning("AWS_PROFILE set (use -p to override)")
-
-def_profile = environ['AWS_PROFILE'] if "AWS_PROFILE" in environ else "awsops"
-
 parser.add_argument('-p','--profile',default=def_profile)
-
+parser.add_argument('mfacode')
 args = parser.parse_args()
 
-info("Note this will CHANGE STATE by edit of files ~/.aws/{credentials,config} ")
-info("The very state used by this very tool, so DOUBLECHECK your arguments")
-info("=" * 40)
+print("*" * 60)
+print("This tool will CHANGE STATE by edit of files ~/.aws/{credentials,config} ")
+print("The very state used by this very tool, so DOUBLECHECK your arguments")
+print("=" * 60)
 
-info(f"Using pre configured profile {args.profile}")
+print(f"Using profile [{args.profile}].")
 session = boto3.Session
