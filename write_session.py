@@ -1,19 +1,18 @@
 #!/usr/bin/python3
 
-import botocore
+from botocore.session import Session
+import botocore.exceptions
 import configparser
 from os import environ
 from sys import exit
-from pathlib import Path
-import re
+
 import argparse
 import logging
 from logging import debug,info,error,warning
 
-logging.basicConfig(level=logging.DEBUG)
-# TODO cleanup format
 
 def main():
+    logging.basicConfig(level=logging.INFO)
 
     if environ.get('AWS_PROFILE'):
         warning("env AWS_PROFILE is set (use -p to override)")
@@ -33,19 +32,48 @@ def main():
     args = parser.parse_args()
 
     print(f"Selected *source* profile [{args.profile}].")
+    aws_session = Session(profile=args.profile)
+    scopeConfig = aws_session.get_scoped_config()
+    # debug(scopeConfig) !!contains secret!!
+    mfa_serial = scopeConfig.get('mfa_serial')
+    print(f"MFA device = {mfa_serial}")
 
     try:
-        source = Conf(args.profile)
-    except LookupError as ex:
-        error(str(ex))
+        resp = sts_session_token(aws_session, args.mfacode, mfa_serial)
+    except botocore.exceptions.ClientError as clientErr:
+        error(clientErr)
         exit(1)
     else:
-        print(source.get_props_dict('''x mfa_serial region
-        aws_secret_access_key aws_access_key_id
-         aws_session_token'''))
-        #print(source.pair[1])
+        print(resp)
+    # try:
+    #     source = Conf(args.profile)
+    # except LookupError as ex:
+    #     error(str(ex))
+    #     exit(1)
+    # else:
+    #     props = source.get_props_dict('''mfa_serial region
+    #     aws_secret_access_key aws_access_key_id
+    #     aws_session_token''')
+    #     info(props)
+    #     sts_session(**props)
+    #     #print(source.pair[1])
 
+# DEAD
+def sts_session_token(aws_session,mfacode,mfa_serial):
+    '''This is where the logic FAILS in botocore.session,
+    attributes already part of aws_session isn't passed on to client,
+    so we fix that here'''
+
+    client = aws_session.create_client('sts')
+    return client.get_session_token( SerialNumber=mfa_serial,
+                         TokenCode=mfacode )
+
+
+# DEAD
 class Conf:
+    from pathlib import Path
+    import re
+
     '''used twice ; once w source profile then w target profile'''
 
     conf_path = Path.home() / ".aws/config"
@@ -68,7 +96,7 @@ class Conf:
 
         c_section_name = self.__find_c_section_name()
 
-        self.core_profile = (
+        self.sections_pair = (
             self.config[c_section_name],
             self.credentials[self.profile]
         )
@@ -90,7 +118,7 @@ class Conf:
         and give credentials precedence'''
         _props = props if isinstance(props,list) else props.split()
         debug(_props)
-        config_sect,cred_sect = self.core_profile
+        config_sect,cred_sect = self.sections_pair
         return dict(
             [(key,config_sect[key]) for key in config_sect if key in _props] +
             [(key,cred_sect[key]) for key in cred_sect if key in _props]
@@ -98,7 +126,9 @@ class Conf:
 
     @property
     def pair(self):
-        return self.core_profile
+        return self.sections_pair
+
+
 
 if __name__ == "__main__":
    main()
