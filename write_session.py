@@ -19,7 +19,7 @@ def main():
     if environ.get('AWS_PROFILE'):
         warning("env AWS_PROFILE is set (use -p to override)")
 
-    def_src_profile = environ['AWS_PROFILE'] if "AWS_PROFILE" in environ else "awsops"
+    def_src_profile = environ.get('AWS_PROFILE',default="awsops")
     def_dest_profile = "default"
 
     parser = argparse.ArgumentParser(
@@ -31,7 +31,7 @@ def main():
     parser.add_argument('-d','--dest-profile',default=def_dest_profile)
     parser.add_argument('mfacode')
     args = parser.parse_args()
- 
+
     print(f"Selected *source* profile [{args.profile}].")
     print(f"         *dest*   profile [{args.dest_profile}].")
 
