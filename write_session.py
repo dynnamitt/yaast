@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+"""Writes a new session/token into a dest profile
+in ~/.aws/ files, to simplify everyday MFA caching"""
 
 from botocore.session import Session
 import botocore.exceptions
@@ -21,8 +23,7 @@ def main():
     def_dest_profile = "default"
 
     parser = argparse.ArgumentParser(
-            description='''Rewrites config state in ~/.aws/ files
-            to simplify everyday MFA work''',
+            description=__doc__,
             epilog="More details in README.md file"
             )
 
@@ -30,10 +31,13 @@ def main():
     parser.add_argument('-d','--dest-profile',default=def_dest_profile)
     parser.add_argument('mfacode')
     args = parser.parse_args()
-
+ 
     print(f"Selected *source* profile [{args.profile}].")
+    print(f"         *dest*   profile [{args.dest_profile}].")
+
     aws_session = Session(profile=args.profile)
     scopeConfig = aws_session.get_scoped_config()
+
     # debug(scopeConfig) !!contains secret!!
     mfa_serial = scopeConfig.get('mfa_serial')
     print(f"MFA device = {mfa_serial}")
@@ -45,6 +49,7 @@ def main():
         exit(1)
     else:
         print(resp)
+
     # try:
     #     source = Conf(args.profile)
     # except LookupError as ex:
@@ -60,21 +65,19 @@ def main():
 
 # DEAD
 def sts_session_token(aws_session,mfacode,mfa_serial):
-    '''This is where the logic FAILS in botocore.session,
+    """This is where the logic FAILS in botocore.session,
     attributes already part of aws_session isn't passed on to client,
-    so we fix that here'''
+    so we fix that here"""
 
     client = aws_session.create_client('sts')
     return client.get_session_token( SerialNumber=mfa_serial,
                          TokenCode=mfacode )
 
-
-# DEAD
+# NOT IN USE
 class Conf:
+    """FIXME Rewrite to use on target profile"""
     from pathlib import Path
     import re
-
-    '''used twice ; once w source profile then w target profile'''
 
     conf_path = Path.home() / ".aws/config"
     cred_path = Path.home() / ".aws/credentials"
@@ -114,8 +117,8 @@ class Conf:
 
     # as dict
     def get_props_dict(self,props):
-        '''Combine result from both INI files
-        and give credentials precedence'''
+        """Combine result from both INI files
+        and give credentials precedence"""
         _props = props if isinstance(props,list) else props.split()
         debug(_props)
         config_sect,cred_sect = self.sections_pair
