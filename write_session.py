@@ -32,13 +32,13 @@ def main():
             )
 
     parser.add_argument('-p', '--profile', default=def_src_profile,
-                        help = "Source profile w/ mfa info and start credentials")
+                        help = "The profile w/ mfa info and start credentials")
     parser.add_argument('-d','--dest-profile',default=def_dest_profile,
                         help = f"Dest profile to write to ({def_dest_profile})")
     parser.add_argument('mfacode')
     args = parser.parse_args()
 
-    print(f"Selected *source* profile [{args.profile}].")
+    print(f"Selected *start* profile [{args.profile}].")
     print(f"         *dest*   profile [{args.dest_profile}].")
 
     aws_session = Session(profile=args.profile)
