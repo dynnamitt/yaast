@@ -17,3 +17,4 @@ defaultxx.new_credentials(
     backup=ConfState.BACKUP_UNLESS_TOKEN)
 
 defaultxx.save()
+print("Ops I just wrote to your ~/.aws/credentials file :-D")
