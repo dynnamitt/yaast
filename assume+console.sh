@@ -3,7 +3,7 @@
 usage(){
   exec 1>&2
   echo "Usage:"
-  echo "   $0 <session-name> [profile]"
+  echo "   $0 [profile]"
   echo ""
   echo "   Will return the Credentials in json and"
   echo "   with BONUS 'CONSOLE_URL' appended (through extra API called)"
@@ -36,11 +36,8 @@ _rawurlencode() {
 #
 # ------------------
 
-SESS_NAME=$1
 
-[ -z "$SESS_NAME" ] && usage
-
-AWS_PROFILE=${2:-$AWS_PROFILE}
+AWS_PROFILE=${1:-$AWS_PROFILE}
 
 if [ -z "$AWS_PROFILE" ];then
   echo 1>&2 "No profile found! (AWS_PROFILE fallback failed)"
@@ -50,8 +47,13 @@ fi
 # echo 1>&2 "Profile = $AWS_PROFILE"
 
 # required args:
-ROLE_ARN=$(aws --profile $AWS_PROFILE configure get role_arn)
-SRC_PROFILE=$(aws --profile $AWS_PROFILE configure get source_profile)
+ROLE_ARN=$(aws --profile $AWS_PROFILE configure get role_arn) # NOTE: cli has a cache BUT we cannot use it
+
+SESS_NAME=$(aws --profile $AWS_PROFILE configure get role_session_name)
+
+if [ -z "$SESS_NAME" ]; then
+  SESS_NAME="$AWS_PROFILE-$((RANDOM % 23456))"
+fi
 
 # optional args:
 EXT_ID=$(aws --profile $AWS_PROFILE configure get external_id)
