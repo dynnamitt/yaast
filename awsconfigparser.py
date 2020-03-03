@@ -9,84 +9,63 @@ from enum import Enum
 
 
 class CFile(Enum):
-    CONF_PATH = Path.home() / ".aws/config"
-    CRED_PATH = Path.home() / ".aws/credentials"
+    CONFIG = (Path.home() / ".aws/config", "profile ")
+    CREDS = (Path.home() / ".aws/credentials", "")
 
-class Backup(Enum):
-    SKIP = 0
-    UNLESS_TOKEN = 1
-    ALWAYS = 2
+    def __init__(self, path: Path, header_prefix: str ):
+        self.path = path
+        self.header_prefix = header_prefix
+
 
 class AWSConfParser:
     """Parse and Write to config duo (aka ~/.aws/{config,credentials}) """
 
 
-    def __init__(self, profile, must_exist=True):
+    def __init__(self, profile:str , cfile: CFile):
 
-        self.profile = profile
+        self._profile = profile
+        self._cfile = cfile
 
-        self.credentials = configparser.ConfigParser()
-        self.credentials.read(CFile.CRED_PATH.value)
-        debug(self.credentials.sections())
+        self._profile_header = f"{self._cfile.header_prefix}{self._profile}" 
+        self._parser = configparser.ConfigParser()
+        self._parser.read(cfile.path)
 
-        self.config = configparser.ConfigParser()
-        self.config.read(CFile.CONF_PATH.value)
-        debug(self.config.sections())
-
-        if must_exist and not self.profile_presens:
-            raise LookupError("Cannot continue")
+        debug(self._parser.sections())
 
 
     @property
-    def profile_presens(self):
-        """Returns a list w CFile enum [0,1 or 2]
-        dependent on profile presens in these INI files"""
-
-        in_creds = CFile.CRED_PATH if self.profile in self.credentials.sections() else None
-        in_config = CFile.CONF_PATH if self.__find_c_section_name() else None
-
-        return list(filter(None,[in_creds,in_config]))
-
-
-    def __find_c_section_name(self):
-        """Since profile has 'profile ' prefix in config file """
-        res = [s for s in self.config.sections() if re.search(self.profile,s)]
-        return res[0] if len(res) else None
+    def exists(self):
+        return self._profile_header in [s.strip() for s in self._parser.sections()]
 
     # as dict
-    def get_props_dict(self):
-        """Combine result from both INI files
-        and give credentials precedence"""
+    # def get_props_dict(self):
+    #     """Combine result from both INI files
+    #     and give credentials precedence"""
 
-        #FIXME
-        if self.profile_presens:
-            conf_sect = self.config[self.__find_c_section_name()]
-            creds_sect = self.credentials[self.profile]
-            return dict(
-                [(key, conf_sect[key]) for key in conf_sect] +
-                [(key, creds_sect[key]) for key in creds_sect]
-                )
-        else:
-            None
+    #     #FIXME
+    #     if self.profile_presens:
+    #         conf_sect = self.config[self.__find_c_section_name()]
+    #         creds_sect = self.credentials[self.profile]
+    #         return dict(
+    #             [(key, conf_sect[key]) for key in conf_sect] +
+    #             [(key, creds_sect[key]) for key in creds_sect]
+    #             )
+    #     else:
+    #         None
 
 
-    def new_credentials(self, attributes, backup=Backup.ALWAYS):
+    def write_new_attrs(self, attributes, backup=False):
 
         def __has_token():
-            return self.get_props_dict().get('aws_session_token')
+            return self._parser
 
-        if self.found_profile and backup==Backup.ALWAYS :
-            self.__backup_profile(CFile.CRED_PATH)
-        elif self.found_profile and backup==Backup.UNLESS_TOKEN :
-            self.__backup_profile(CFile.CRED_PATH) if not __has_token() else None
-        elif self.found_profile:
-            # this is the old one that will be replaced
-            debug([(key,self.credentials[self.profile][key]) for key in self.credentials[self.profile]])
+        if self.exists and backup :
+            self.__backup_profile(self._profile_header)
+        else:
+            warning("No bakcup!")
+       
+        self._parser.section[self.profile] = attributes
 
-        self.credentials[self.profile] = attributes
-
-
-    def save(self):
         with open(CFile.CRED_PATH, 'w') as f:
             self.credentials.write(f)
 
@@ -98,5 +77,15 @@ class AWSConfParser:
         pass
 
 
+import unittest
+
+class TestStringMethods(unittest.TestCase):
+
+    def test_non_existing_profile(self):
+        sut = AWSConfParser("yyy", CFile.CONFIG)
+        
+        self.assertEqual(sut.exists, False)
+
 if __name__ == "__main__":
-   main()
+    unittest.main()
+
