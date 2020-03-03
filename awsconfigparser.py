@@ -2,6 +2,7 @@
 
 import configparser
 import logging
+import collections
 from logging import debug,info,error,warning
 from pathlib import Path
 import re
@@ -37,39 +38,32 @@ class AWSConfParser:
     def exists(self):
         return self._profile_header in [s.strip() for s in self._parser.sections()]
 
-    # as dict
-    # def get_props_dict(self):
-    #     """Combine result from both INI files
-    #     and give credentials precedence"""
-
-    #     #FIXME
-    #     if self.profile_presens:
-    #         conf_sect = self.config[self.__find_c_section_name()]
-    #         creds_sect = self.credentials[self.profile]
-    #         return dict(
-    #             [(key, conf_sect[key]) for key in conf_sect] +
-    #             [(key, creds_sect[key]) for key in creds_sect]
-    #             )
-    #     else:
-    #         None
+    @property
+    def key_values(self):
+        return [(key, self._parser[self._profile_header][key]) for key in self._parser[self._profile_header]]
+       
 
 
-    def write_new_attrs(self, attributes, backup=False):
+    def set_new_attrs(self, backup: bool, **kwargs):
 
         def __has_token():
             return self._parser
 
         if self.exists and backup :
             self.__backup_profile(self._profile_header)
-        else:
-            warning("No bakcup!")
-       
-        self._parser.section[self.profile] = attributes
+        elif self.exists:
+            warning("No bakckup done!")
+        
 
-        with open(CFile.CRED_PATH, 'w') as f:
-            self.credentials.write(f)
+        self._parser[self._profile_header] = kwargs
+        info(self.key_values)
 
-        return [self.__class__.CRED_PATH]
+    def save(self):
+
+        with open(self._cfile.path, 'w') as f:
+            self._parser.write(f)
+
+        return [self._cfile]
 
     def __backup_profile(self, filepath):
         # some algo to makeup a name
@@ -78,14 +72,49 @@ class AWSConfParser:
 
 
 import unittest
+import os
+
+def file_contents(path):
+    with open(path) as f:
+        for line in f:
+            info(line.strip())
 
 class TestStringMethods(unittest.TestCase):
+    TestCFileEnum = collections.namedtuple('_Cfile',("path header_prefix"))
+
+
 
     def test_non_existing_profile(self):
         sut = AWSConfParser("yyy", CFile.CONFIG)
-        
         self.assertEqual(sut.exists, False)
 
+    def test_existing_profile(self):
+
+        sut = AWSConfParser("default", CFile.CONFIG)
+        self.assertEqual(sut.exists, True)
+        info(sut.key_values)
+
+    def test_insert(self):
+        testcase = self.__class__.TestCFileEnum("/tmp/py-testfile.ini","")
+        sut = AWSConfParser("unittest-profile", testcase)
+        #self.assertEqual(sut.exists, False)
+        sut.set_new_attrs(backup=False, x=1, y="2")
+        sut.save()
+        file_contents(testcase.path)
+        # cleanup
+        os.remove(testcase.path)
+
+    def test_insert(self):
+        testcase = self.__class__.TestCFileEnum("/tmp/py-testfile.ini","")
+        sut = AWSConfParser("unittest-profile", testcase)
+        #self.assertEqual(sut.exists, False)
+        sut.set_new_attrs(backup=False, x=1, y="2")
+        sut.save()
+        file_contents(testcase.path)
+        # cleanup
+        os.remove(testcase.path)
+
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
     unittest.main()
 
