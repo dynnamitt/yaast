@@ -34,20 +34,25 @@ class AWSConfParser:
         debug(self._parser.sections())
 
 
-    @property
+    @property 
     def exists(self):
+        """Does this profile exist here?"""
         return self._profile_header in [s.strip() for s in self._parser.sections()]
 
     @property
-    # realy helpful since configparser::ConfigParser is weirdo
+    #
     def __dict__(self):
+        """Helpful since configparser::ConfigParser object hides the dict inside"""
+
         if self.exists:
+            # a true dict prop
             return self._parser._sections[self._profile_header]
         else:
             return {}
  
 
     def set_new_attrs(self, backup: bool, **kwargs):
+        """Reset the section, ready to be saved"""
 
         def __has_token():
             return self._parser
@@ -60,6 +65,7 @@ class AWSConfParser:
         self._parser[self._profile_header] = kwargs
 
     def save(self):
+        """Save to DISK!"""
 
         with open(self._cfile.path, 'w') as f:
             self._parser.write(f)
@@ -67,6 +73,8 @@ class AWSConfParser:
         return [self._cfile]
 
     def __backup_profile(self, filepath):
+        """Make a *_DATETIME backup profile"""
+
         # some algo to makeup a name
         warning(f"__backup_profile() impl missing still missing. {filepath}")
         pass
@@ -82,7 +90,6 @@ def file_contents(path):
 
 class TestStringMethods(unittest.TestCase):
     TestCFileEnum = collections.namedtuple('_Cfile',("path header_prefix"))
-
 
     def test_non_existing_profile(self):
         sut = AWSConfParser("yyy", CFile.CONFIG)
