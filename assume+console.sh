@@ -21,10 +21,9 @@ usage(){
   exit 1
 }
 
-set -x
-export LANG=C
 
 # urlencode_posix() {
+#  export LANG=C
  # No good !
  # 
 #   _arg="$1"
