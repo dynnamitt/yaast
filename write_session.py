@@ -11,6 +11,8 @@ import argparse
 import logging
 from logging import debug,info,error,warning
 
+from awsconfigparser import CFile,AWSConfParser
+
 #FIXME lookup the python-way
 VER = "0.0.1"
 SCRIPT_NAME = "yaast.write_session.py"
@@ -18,30 +20,14 @@ HOMEPAGE = "example.com"
 
 logging.basicConfig(level=logging.INFO)
 
-def main():
+def main(profile, dest_profile, mfacode):
 
-    if environ.get('AWS_PROFILE'):
-        warning("env AWS_PROFILE is set (use -p to override)")
 
-    def_src_profile = environ.get('AWS_PROFILE',default="awsops")
-    def_dest_profile = "default"
 
-    parser = argparse.ArgumentParser(
-            description=__doc__,
-            epilog="More details in README.md file"
-            )
+    print(f"Selected *start* profile [{profile}].")
+    print(f"         *dest*   profile [{dest_profile}].")
 
-    parser.add_argument('-p', '--profile', default=def_src_profile,
-                        help = "The profile w/ mfa info and start credentials")
-    parser.add_argument('-d','--dest-profile',default=def_dest_profile,
-                        help = f"Dest profile to write to ({def_dest_profile})")
-    parser.add_argument('mfacode')
-    args = parser.parse_args()
-
-    print(f"Selected *start* profile [{args.profile}].")
-    print(f"         *dest*   profile [{args.dest_profile}].")
-
-    aws_session = Session(profile=args.profile)
+    aws_session = Session(profile=profile)
     # useful stuff:
     scopeConfig = aws_session.get_scoped_config()
 
@@ -50,7 +36,7 @@ def main():
     print(f"MFA device = {mfa_serial}")
 
     try:
-        resp = sts_session_token(aws_session, args.mfacode, mfa_serial)
+        resp = sts_session_token(aws_session, mfacode, mfa_serial)
         r_creds = resp['Credentials']
     except botocore.exceptions.ClientError as clientErr:
         error(clientErr)
@@ -59,8 +45,8 @@ def main():
     info(f"Downloaded new temp/creds. ID = {r_creds['AccessKeyId']}")
     #info(resp)
 
-    # shoud not raise .. probably
-    dest_conf_state = ConfState(args.dest_profile, must_exist=False)
+    
+    dest_conf_state = ConfState(dest_profile, must_exist=False)
 
     if dest_conf_state.found_profile:
         # ask since dest_profile EXIST !!
@@ -197,4 +183,24 @@ class ConfState:
 
 
 if __name__ == "__main__":
-   main()
+
+    if environ.get('AWS_PROFILE'):
+        warning("env AWS_PROFILE is set (use -p to override)")
+
+    def_src_profile = environ.get('AWS_PROFILE',default="awsops")
+    def_dest_profile = "default"
+
+    parser = argparse.ArgumentParser(
+            description=__doc__,
+            epilog="More details in README.md file"
+            )
+
+    parser.add_argument('-p', '--profile', default=def_src_profile,
+                        help = "The profile w/ mfa info and start credentials")
+    parser.add_argument('-d','--dest-profile',default=def_dest_profile,
+                        help = f"Dest profile to write to ({def_dest_profile})")
+    parser.add_argument('mfacode')
+
+    args = parser.parse_args()
+
+    main(**vars(args))

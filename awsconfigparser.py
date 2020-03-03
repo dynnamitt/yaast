@@ -40,8 +40,7 @@ class AWSConfParser:
 
     @property
     def key_values(self):
-        return [(key, self._parser[self._profile_header][key]) for key in self._parser[self._profile_header]]
-       
+        return vars(self._parser[self._profile_header])
 
 
     def set_new_attrs(self, backup: bool, **kwargs):
@@ -81,7 +80,6 @@ def file_contents(path):
 
 class TestStringMethods(unittest.TestCase):
     TestCFileEnum = collections.namedtuple('_Cfile',("path header_prefix"))
-
 
 
     def test_non_existing_profile(self):
