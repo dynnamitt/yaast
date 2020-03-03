@@ -39,9 +39,13 @@ class AWSConfParser:
         return self._profile_header in [s.strip() for s in self._parser.sections()]
 
     @property
-    def key_values(self):
-        return vars(self._parser[self._profile_header])
-
+    # realy helpful since configparser::ConfigParser is weirdo
+    def __dict__(self):
+        if self.exists:
+            return self._parser._sections[self._profile_header]
+        else:
+            return {}
+ 
 
     def set_new_attrs(self, backup: bool, **kwargs):
 
@@ -51,11 +55,9 @@ class AWSConfParser:
         if self.exists and backup :
             self.__backup_profile(self._profile_header)
         elif self.exists:
-            warning("No bakckup done!")
-        
+            warning("Skipped backup of existing profile!")
 
         self._parser[self._profile_header] = kwargs
-        info(self.key_values)
 
     def save(self):
 
@@ -85,12 +87,13 @@ class TestStringMethods(unittest.TestCase):
     def test_non_existing_profile(self):
         sut = AWSConfParser("yyy", CFile.CONFIG)
         self.assertEqual(sut.exists, False)
+        info(vars(sut))
 
     def test_existing_profile(self):
 
         sut = AWSConfParser("default", CFile.CONFIG)
         self.assertEqual(sut.exists, True)
-        info(sut.key_values)
+        info(vars(sut))
 
     def test_insert(self):
         testcase = self.__class__.TestCFileEnum("/tmp/py-testfile.ini","")
@@ -102,15 +105,6 @@ class TestStringMethods(unittest.TestCase):
         # cleanup
         os.remove(testcase.path)
 
-    def test_insert(self):
-        testcase = self.__class__.TestCFileEnum("/tmp/py-testfile.ini","")
-        sut = AWSConfParser("unittest-profile", testcase)
-        #self.assertEqual(sut.exists, False)
-        sut.set_new_attrs(backup=False, x=1, y="2")
-        sut.save()
-        file_contents(testcase.path)
-        # cleanup
-        os.remove(testcase.path)
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
