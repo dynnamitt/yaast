@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 """Writes a new session/token into a dest profile
-in ~/.aws/ files, to simplify everyday MFA caching"""
+in ~/.aws/credentials, to simplify everyday MFA caching"""
 
 from botocore.session import Session
 import botocore.exceptions
@@ -13,7 +13,7 @@ from logging import debug,info,error,warning
 
 from awsconfigparser import CFile,AWSConfParser
 
-#FIXME lookup the python-way (setup_tools)
+# FIXME lookup the python-way (setup_tools)
 VER = "0.0.2"
 SCRIPT_NAME = "yaast.write_session.py"
 HOMEPAGE = "example.com"
@@ -21,7 +21,7 @@ HOMEPAGE = "example.com"
 logging.basicConfig(level=logging.INFO)
 
 def main(profile, dest_profile, mfacode):
-
+    
     print(f"Selected *start* profile [{profile}].")
     print(f"         *dest*   profile [{dest_profile}].")
 
@@ -98,9 +98,9 @@ if __name__ == "__main__":
             )
 
     parser.add_argument('-p', '--profile', default=def_src_profile,
-                        help = "The profile w/ mfa info and start credentials")
+                        help = f'The profile w/ mfa info and start credentials. "{def_src_profile}" when unset')
     parser.add_argument('-d','--dest-profile',default=def_dest_profile,
-                        help = f"Dest profile to write to ({def_dest_profile})")
+                        help = f'Dest profile to write to. "{def_dest_profile}" when unset')
     parser.add_argument('mfacode')
 
     args = parser.parse_args()

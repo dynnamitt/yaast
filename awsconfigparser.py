@@ -5,7 +5,6 @@ import logging
 import collections
 from logging import debug,info,error,warning
 from pathlib import Path
-import re
 from enum import Enum
 
 
@@ -40,7 +39,6 @@ class AWSConfParser:
         return self._profile_header in [s.strip() for s in self._parser.sections()]
 
     @property
-    #
     def __dict__(self):
         """Helpful since configparser::ConfigParser object hides the dict inside"""
 
