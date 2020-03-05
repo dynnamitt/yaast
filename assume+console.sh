@@ -104,10 +104,10 @@ aws sts assume-role \
   --role-session-name "$SESS_NAME" \
   $_EXT_ID $_MFA_SERIAL > $TMP_CREDS_FILE
 
-REQ_SESS_ENCODED=$(jq '{ "sessionId" : .Credentials.AccessKeyId,
+REQ_SESS_ENCODED=$(jq -r '{ "sessionId" : .Credentials.AccessKeyId,
   "sessionKey": .Credentials.SecretAccessKey,
-  "sessionToken": .Credentials.SessionToken}' \
-  < $TMP_CREDS_FILE | jq -Rrs '@uri' )
+  "sessionToken": .Credentials.SessionToken} | @uri' \
+  < $TMP_CREDS_FILE )
 
 GET_SIGNIN_TOKEN_URL="https://signin.aws.amazon.com/federation?Action=getSigninToken&Session=${REQ_SESS_ENCODED}"
 
