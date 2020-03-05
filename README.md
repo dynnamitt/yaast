@@ -14,7 +14,7 @@ Both the *start* and *dest* profiles names can be selected with flags
     ./write_session.py --help
 
 
-*DEPENDS* on botocore ( pip install botocore --user )
+*DEPENDS* on botocore ( pip3 install botocore )
 
 ## 2. assume+console
 

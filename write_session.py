@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 """Writes a new session/token into a dest profile
 in ~/.aws/credentials, to simplify everyday MFA caching"""
 
