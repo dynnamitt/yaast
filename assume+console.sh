@@ -1,67 +1,34 @@
-#!/bin/bash
+#!/bin/sh
 
+# ----------------------------------------------------------------
+# Extracted parts from https://github.com/basefarm/aws-session-tool
 #
-# Extracted code from https://github.com/basefarm/aws-session-tool
+# checkbashisms => zero warnings :)
 # 
-# This is just the "get_console_url" feature adapted for 
-# awscli/tools using profiles in the ~/.aws/ files
+# This is the "get_console_url" feature adapted for 
+# awscli/tools using PROFILES in the ~/.aws/ files
 #
-# NOTE: Script has been run w/ checkbashisms and kept POSIX to inspire
-#       me to write a python version :-|
+# Depends on [jq] to solve
+#   - json parsing
+#   - uri_encoding
+#
+# ----------------------------------------------------------------
 
 AWS_PROFILE=${1:-$AWS_PROFILE}
 
 usage(){
-  exec 1>&2
+  (
   echo "Usage:"
   echo "   $0 [role_arn-profile]"
   echo ""
   echo "   Will return temp AssumeRole credentials as JSON and"
   echo "   with BONUS 'CONSOLE_URL' appended (through one extra API called)"
+  )>&2
   exit 1
 }
 
-
-# urlencode_posix() {
-#  export LANG=C
- # No good !
- # 
-#   _arg="$1"
-#   _idx="0"
-#   while [ "$_idx" -lt ${#_arg} ]; do
-#     #c=${_arg:$_idx:1}
-#     c=$(echo "$_arg"|cut -c$(( $_idx + 1 ))-$(( $_idx + 2 )))
-#     if echo "$c" | grep -q '[a-zA-Z/:_\.\-]'; then
-#       echo -n "$c"
-#     else
-#       echo -n "%"
-#       printf "%X" "'$c'"
-#     fi
-#     i=$((_idx+1))
-#   done
-# }
-
-
-# Utility to urlencode a string (bashisms)
-_rawurlencode() {
-  local string="${1}"
-  local strlen=${#string}
-  local encoded=""
-
-  for (( pos=0 ; pos<strlen ; pos++ )); do
-    c=${string:$pos:1}
-    case "$c" in
-      [-_.~a-zA-Z0-9] ) o="${c}" ;;
-      *               ) printf -v o '%%%02x' "'$c"
-     esac
-     encoded+="${o}"
-  done
-  echo "${encoded}"
-}
-
 read_mfa_code(){
-
-  exec 1>&2
+  (
   echo "# -------------- mfa_serial found ------------------ #  "
   echo
   echo "  This is probably not the best way to use MFA,         "
@@ -70,6 +37,7 @@ read_mfa_code(){
   echo "  credentials dont't expire during your workday!        "
   echo
   printf "MFA CODE : "
+  )>&2
   read MFA_CODE
 }
 
@@ -85,7 +53,7 @@ gen_session_name(){
 
 # ------------------
 #
-#        M A I N
+#    M A I N
 #
 # ------------------
 
@@ -136,21 +104,17 @@ aws sts assume-role \
   --role-session-name "$SESS_NAME" \
   $_EXT_ID $_MFA_SERIAL > $TMP_CREDS_FILE
 
-REQ_SESS=$(jq '{ "sessionId" : .Credentials.AccessKeyId,
+REQ_SESS_ENCODED=$(jq '{ "sessionId" : .Credentials.AccessKeyId,
   "sessionKey": .Credentials.SecretAccessKey,
   "sessionToken": .Credentials.SessionToken}' \
-  < $TMP_CREDS_FILE)
+  < $TMP_CREDS_FILE | jq -Rrs '@uri' )
 
-REQ_SESS_ENCODED=$(_rawurlencode "$REQ_SESS")
 GET_SIGNIN_TOKEN_URL="https://signin.aws.amazon.com/federation?Action=getSigninToken&Session=${REQ_SESS_ENCODED}"
 
-#echo $GET_SIGNIN_TOKEN_URL
 SIGNIN_TOKEN=$(curl --silent ${GET_SIGNIN_TOKEN_URL} | jq -r '.SigninToken')
-CONSOLE=$(_rawurlencode "https://console.aws.amazon.com/")
+CONSOLE=$(jq -nr --arg v "https://console.aws.amazon.com/" '$v|@uri')
 
-CONSOLE_URL="https://signin.aws.amazon.com/federation?Action=login&Issuer=&Destination=${CONSOLE}&SigninToken=${SIGNIN_TOKEN}"
+CONSOLE_URL="https://signin.aws.amazon.com/federation?Action=login&Destination=${CONSOLE}&SigninToken=${SIGNIN_TOKEN}"
 
 # MERGE it back out .. ready for another code
 jq '{ "Credentials" : .Credentials, "CONSOLE_URL": "'$CONSOLE_URL'"}' < $TMP_CREDS_FILE
-
-
