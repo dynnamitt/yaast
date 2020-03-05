@@ -48,7 +48,7 @@ get_p_attr(){
 gen_session_name(){
   # TODO make a safe prefix
   _sess_prefix=$AWS_PROFILE
-  echo "$_sess_prefix-$((RANDOM % 23456))"
+  echo "$_sess_prefix-$(date +'%s')"
 }
 
 # ------------------
