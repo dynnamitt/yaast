@@ -6,7 +6,7 @@ the MFA enabled user faces the challege of
 mantaining a daily set of temp accessKeys+token (session) for
 use with awscli, sdks and terrible stuff like terraform.
 
-(Windows compatible wherever python implented)
+(Windows compatible wherever python implements)
 
 ## 1. write_session (MFA resolver)
 
