@@ -21,18 +21,23 @@ Both the *start* and *dest* profiles names can be selected with flags
 
 *DEPENDS* on botocore (pip3 install botocore)
 
-## 2a. assume+console (shell version)
+## 2a. assume+console 
 
-Posix script that downloads AssumeRole temp access/token set and 
-also mixes in a CONSOLE_URL signed with these fresh credentials
+Downloads AssumeRole temp access/token set and will
+also mix in a CONSOLE_URL signed with these fresh credentials.
+
+### 2.1 Shell version
+
+Posix version (/bin/sh #no-bashisms) 
 
      ./assume+console.sh [role_arn-profile]
      
 *DEPENDS* on awscli , jq and curl
 
-## 2b. assume+console (python/windows version)
+### 2.2. python3 version
 
-Same feature as above but with just botocore as a dependency 
+Should only have botocore as single dependency 
+
 PENDING 
 
 
