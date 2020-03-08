@@ -49,7 +49,7 @@ Create multiple profiles from a cfg data file.
 
 ### 3.1 cfg file format
 
-Format from basefarm/aws-session-tool :
+Format from basefarm/aws-session-tool , ( REGION is an "extension" )
 
 ```
 <ROLEID> <ROLEARN>  <NAME>  <EXTID> <REGION>
