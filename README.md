@@ -1,10 +1,10 @@
-YetAnotherAWSSessionTool
-========================
+# Yaast (Jåst)
+## YetAnotherAWSSessionTool
 
-After obtaining a normal accessKey set, 
+*Why?* ..After obtaining a normal accessKey set, 
 the MFA enabled user faces the challege of 
 mantaining a daily set of temp accessKeys+token (session) for
-use with awscli, sdks and terrible stuff like terraform.
+use with awscli, sdks and the stuff like terraform.
 
 (Windows compatible wherever python implements)
 
