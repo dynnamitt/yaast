@@ -30,10 +30,11 @@ also mixes in a CONSOLE_URL signed with these fresh credentials
 
 ## 2b assume+console (py3 version)
 
-PENDING
+Same feature as above but with just botocore as a dependency 
+PENDING 
 
 
-## 3 Writing new profiles into $HOME/.aws/config
+## 3 Addind new profiles into $HOME/.aws/config
 
 PENDING
 
@@ -53,12 +54,11 @@ Check sample file _____ .
 
 PENDING
 
-A profile (in ~/.aws/config) will be made using the <NAME>
-and adding a 'source_profile' attr to connect the session token/credentials.
+A profile (in ~/.aws/config) will be added with name = `<NAME>`
+and adding a 'source_profile' attr to connect into the session token/credentials.
 
 The 'source_profile' value will be litteraly 'default' if not given with flag.
 
-*NB:* The 'source_profile' value SHOULD NOT be the same as above <CORE_PROFILE>
 
 ```read multiple records from STDIN
 add_roles [-s source_profile] [-o] < roles.cfg
