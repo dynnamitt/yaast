@@ -26,6 +26,9 @@ Both the *start* and *dest* profiles names can be selected with flags
 Downloads AssumeRole temp access/token set and will
 also mix in a CONSOLE_URL signed with these fresh credentials.
 
+Make sure that you added atleast one profile in $HOME/.aws/config that
+contains the `role_arn` attributte .
+
 ### 2.1. Shell version
 
 Posix version (/bin/sh #no-bashisms) 
