@@ -60,7 +60,7 @@ def main(profile, dest_profile, mfacode):
     #                            backup=ConfState.BACKUP_UNLESS_TOKEN)
 
     edits = creds.save()
-    print(f"Wrote edits to file(s) : {[str(fn) for fn in edits]}")
+    print(f"Wrote edits to file(s) : {[str(fn.path) for fn in edits]}")
 
 
 def sts_session_token(aws_session,mfacode,mfa_serial):

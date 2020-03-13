@@ -24,14 +24,14 @@ class AWSConfParser:
         self._profile = profile
         self._cfile = cfile
 
-        self._profile_header = f"{self._cfile.header_prefix}{self._profile}" 
+        self._profile_header = f"{self._cfile.header_prefix}{self._profile}"
         self._parser = configparser.ConfigParser()
         self._parser.read(cfile.path)
 
         debug(self._parser.sections())
 
 
-    @property 
+    @property
     def exists(self):
         """Does this profile exist here?"""
         return self._profile_header in [s.strip() for s in self._parser.sections()]
@@ -45,7 +45,7 @@ class AWSConfParser:
             return self._parser._sections[self._profile_header]
         else:
             return {}
- 
+
 
     def set_new_attrs(self, backup: bool, **kwargs):
         """Reset the section, ready to be saved"""
@@ -72,7 +72,7 @@ class AWSConfParser:
         """Make a *_DATETIME backup profile"""
 
         # some algo to makeup a name
-        warning(f"__backup_profile() impl missing still missing. {filepath}")
+        warning(f"__backup_profile() impl missing still missing. Overwriting: [{filepath}].")
         pass
 
 
