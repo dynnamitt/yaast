@@ -36,16 +36,25 @@ class AWSConfParser:
         """Does this profile exist here?"""
         return self._profile_header in [s.strip() for s in self._parser.sections()]
 
-    @property
-    def __dict__(self):
+    # dict emulation
+    def  __getitem__(self, key):
         """Helpful since configparser::ConfigParser object hides the dict inside"""
-
         if self.exists:
             # a true dict prop
-            return self._parser._sections[self._profile_header]
+            return self._parser._sections[self._profile_header][key]
         else:
-            return {}
+            return None
 
+    # dict emulation
+    def  get(self, key, default=None):
+        """Helpful since configparser::ConfigParser object hides the dict inside"""
+
+        # replace w try (and use __getitem__)
+        if self.exists:
+            # a true dict prop
+            return self._parser._sections[self._profile_header].get(key,default)
+        else:
+            return None
 
     def set_new_attrs(self, backup: bool, **kwargs):
         """Reset the section, ready to be saved"""

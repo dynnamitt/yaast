@@ -23,7 +23,15 @@ logging.basicConfig(level=logging.INFO)
 def main(profile, dest_profile, mfacode):
     
     print(f"Selected *start* profile [{profile}].")
-    print(f"         *dest*   profile [{dest_profile}].")
+    print(f"         *dest*  profile [{dest_profile}].")
+
+    if dest_profile == profile:
+        print("ERROR: Cannot continue with 'start == destination' ! ")
+        exit(1)
+
+    creds, backup = load_creds(dest_profile)
+
+    #info(f"back {backup}")
 
     aws_session = Session(profile=profile)
     
@@ -44,23 +52,30 @@ def main(profile, dest_profile, mfacode):
     info(f"Downloaded new temp/creds. ID = {r_creds['AccessKeyId']}")
     #info(resp)
 
-    creds = AWSConfParser(dest_profile, CFile.CREDS)
-
-    #dest_conf_state = ConfState(dest_profile, must_exist=False)
-
-    if creds.exists:
-        # ask since dest_profile EXIST !!
-        warning("NOTE: we should ask if user need a backup here.")
-        pass
-
-    creds.set_new_attrs(backup=True, **attribs_from_raw(r_creds))
-
-
-    # dest_conf_state.new_credentials(attribs_from_raw(r_creds),
-    #                            backup=ConfState.BACKUP_UNLESS_TOKEN)
+    
+    creds.set_new_attrs(backup, **attribs_from_raw(r_creds))
 
     edits = creds.save()
     print(f"Wrote edits to file(s) : {[str(fn.path) for fn in edits]}")
+
+
+
+def load_creds(dest_profile:str):
+    """Load creds object and get backup bool"""
+
+    creds = AWSConfParser(dest_profile, CFile.CREDS)
+
+    backup = False
+
+    if creds.exists and creds.get('aws_session_token') :
+        inp = input(f"Would you like to backup the '{dest_profile}' session profile? [N/y] ")
+        backup = inp.strip().lower() == 'y'
+    elif creds.exists:
+        print("WARNING: There is an existing (NON SESSION) destination profile.. ")
+        inp = input(f" ..would you like to backup this '{dest_profile}' profile? [Y/n] ")
+        backup = inp.strip().lower() == 'y'
+
+    return creds,backup
 
 
 def sts_session_token(aws_session,mfacode,mfa_serial):
