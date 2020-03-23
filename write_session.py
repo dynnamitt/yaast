@@ -25,6 +25,10 @@ def main(profile, dest_profile, mfacode):
     print(f"Selected *start* profile [{profile}].")
     print(f"         *dest*  profile [{dest_profile}].")
 
+    if not mfacode:
+        print("ERROR: no mfacode!")
+        exit(1)
+
     if dest_profile == profile:
         print("ERROR: Cannot continue with 'start == destination' ! ")
         exit(1)
@@ -41,6 +45,10 @@ def main(profile, dest_profile, mfacode):
     # debug(scopeConfig)
     mfa_serial = scopeConfig.get('mfa_serial')
     print(f"MFA device = {mfa_serial}")
+
+    if not mfa_serial:
+        print(f"ERROR: Add 'mfa_serial' to profile [{profile}]")
+        exit(1)
 
     try:
         resp = sts_session_token(aws_session, mfacode, mfa_serial)
@@ -68,7 +76,7 @@ def load_creds(dest_profile:str):
     backup = False
 
     if creds.exists and creds.get('aws_session_token') :
-        inp = input(f"Would you like to backup the '{dest_profile}' session profile? [N/y] ")
+        inp = input(f"Would you like to backup the old '{dest_profile}' session profile? [N/y] ")
         backup = inp.strip().lower() == 'y'
     elif creds.exists:
         print("WARNING: There is an existing (NON SESSION) destination profile.. ")
@@ -78,16 +86,18 @@ def load_creds(dest_profile:str):
     return creds,backup
 
 
-def sts_session_token(aws_session,mfacode,mfa_serial):
+def sts_session_token(aws_session, mfacode=None, mfa_serial=None):
     """This is where the logic FAILS in botocore.session,
     attributes already part of aws_session isn't passed on to client,
-    so we fix that here"""
-
+    so we FIX that here"""
     client = aws_session.create_client('sts')
     return client.get_session_token( SerialNumber=mfa_serial,
                                     TokenCode=mfacode )
 
 def attribs_from_raw(raw_credentials) :
+    """Transform API response object into coresponding 
+       names inside the credentials-file"""
+
     # FIXME OrderedDict?
     return {
         "__appended_by_script__" : SCRIPT_NAME + f" {VER}",
