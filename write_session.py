@@ -33,11 +33,11 @@ def main(profile, dest_profile, mfacode):
         print("ERROR: Cannot continue with 'start == destination' ! ")
         exit(1)
 
-    creds, backup = load_creds(dest_profile)
-
     #info(f"back {backup}")
 
     aws_session = Session(profile=profile)
+
+    creds, backup = load_creds(dest_profile)
     
     # useful stuff in botocore:
     scopeConfig = aws_session.get_scoped_config()
