@@ -37,6 +37,15 @@ Posix version (/bin/sh #no-bashisms)
      
 *DEPENDS* on awscli , jq and curl
 
+#### 2.1.1 creds_2_env.sh
+
+If you pipe the above result json into this script like this
+
+    eval $(./assume+console.sh dev | ./creds_2_env.sh)
+
+The eval will SET the ASSUME-ROLE credentials into AWS_* environment variables for you,
+useful for some sdk's that dont work well w/ fancy awscli profiles
+
 ### 2.2. python3 version
 
 Should only have botocore as single dependency 
