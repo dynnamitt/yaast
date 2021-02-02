@@ -16,10 +16,12 @@
 
 AWS_PROFILE=${1:-$AWS_PROFILE}
 
+OUT_FMT=${2:-json}
+
 usage(){
   (
   echo "Usage:"
-  echo "   $0 [role_arn-profile]"
+  echo "   $0 [role_arn-profile] [json|text]"
   echo ""
   echo "   Will return temp AssumeRole credentials as JSON and"
   echo "   with BONUS 'CONSOLE_URL' appended (through one extra API called)"
@@ -61,6 +63,12 @@ if [ -z "$AWS_PROFILE" ];then
   echo 1>&2 "ERROR: No profile found! (AWS_PROFILE fallback failed)"
   usage
 fi
+
+if [ "$OUT_FMT" != "json" ] && [ "$OUT_FMT" != "text" ];then
+  echo 1>&2 "ERROR: Illegal format selected . Use either 'json' or 'text'"
+  usage
+fi
+
 
 # required args:
 ROLE_ARN=$(get_p_attr role_arn) # NOTE: cli has a cache BUT we cannot use it
@@ -116,5 +124,20 @@ CONSOLE=$(jq -nr --arg v "https://console.aws.amazon.com/" '$v|@uri')
 
 CONSOLE_URL="https://signin.aws.amazon.com/federation?Action=login&Destination=${CONSOLE}&SigninToken=${SIGNIN_TOKEN}"
 
-# MERGE it back out .. ready for another code
-jq '{ "Credentials" : .Credentials, "CONSOLE_URL": "'$CONSOLE_URL'"}' < $TMP_CREDS_FILE
+# MERGE it back out .. ready for another pipe
+
+
+
+
+if [ $OUT_FMT = "text" ]
+then
+  jq -r "[ 
+  \"export AWS_ACCESS_KEY_ID=\" + .Credentials.AccessKeyId,
+  \"export AWS_SECRET_ACCESS_KEY=\" + .Credentials.SecretAccessKey,
+  \"export AWS_SESSION_TOKEN=\" + .Credentials.SessionToken,
+  (\"export CONSOLE_URL=$CONSOLE_URL\") ] | join(\"\n\n\") " < $TMP_CREDS_FILE
+else
+  jq -r '{ "Credentials" : .Credentials, "CONSOLE_URL": "'$CONSOLE_URL'" }' < $TMP_CREDS_FILE
+fi
+
+
