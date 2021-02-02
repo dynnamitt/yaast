@@ -33,7 +33,9 @@ contains the `role_arn` attributte .
 
 Posix version (/bin/sh #no-bashisms) 
 
-     ./assume+console.sh [role_arn-profile]
+     ./assume+console.sh [role_arn-profile] [json|text]
+
+Format output : "json" is almost what aws-api returns, "text" is a bash script snippet env/export lines 
      
 *DEPENDS* on awscli , jq and curl
 
