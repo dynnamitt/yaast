@@ -45,13 +45,15 @@ def main(profile, dest_profile, code):
     print(f"MFA device = {mfa_serial}")
 
     if not mfa_serial:
-        print(f"ERROR: Add 'mfa_serial' to profile [{profile}]")
-        exit(1)
+        print(f"NOTE: No 'mfa_serial' in profile [{profile}]")
+ 
 
     try:
-        opts = { "SerialNumber": mfa_serial }
+        opts = {}
         if code:
             opts["TokenCode"] = code
+        if mfa_serial:
+            opts["SerialNumber"] = mfa_serial
 
         resp = sts_session_token(aws_session, opts)
 
