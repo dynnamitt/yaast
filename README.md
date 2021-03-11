@@ -6,7 +6,13 @@ the MFA enabled user faces the challege of
 mantaining a daily set of temp accessKeys+token (session) for
 use with awscli, sdks and the stuff like terraform.
 
-(Windows compatible wherever python implements)
+## 0. Setup "start" profile
+
+    aws configure --profile awsops
+    # PASTE keys from aws csv file ...
+    
+    vim ~/.aws/config 
+    # ADD mfa_serial = arn:aws:iam::0000000:xxx/xxxxxxx
 
 ## 1. write_session (MFA resolver)
 
@@ -38,15 +44,6 @@ Posix version (/bin/sh #no-bashisms)
 Format output : "json" is almost what aws-api returns, "text" is a bash script snippet env/export lines 
      
 *DEPENDS* on awscli , jq and curl
-
-#### 2.1.1 creds_2_env.sh
-
-If you pipe the above result json into this script like this
-
-    eval $(./assume+console.sh dev | ./creds_2_env.sh)
-
-The eval will SET the ASSUME-ROLE credentials into AWS_* environment variables for you,
-useful for some sdk's that dont work well w/ fancy awscli profiles
 
 ### 2.2. python3 version
 
