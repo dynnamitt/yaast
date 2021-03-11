@@ -21,14 +21,11 @@ HOMEPAGE = "example.com"
 logging.basicConfig(level=logging.INFO)
 
 
-def main(profile, dest_profile, mfacode):
+def main(profile, dest_profile, code):
 
     print(f"Selected *start* profile [{profile}].")
     print(f"         *dest*  profile [{dest_profile}].")
 
-    if not mfacode:
-        print("ERROR: no mfacode!")
-        exit(1)
 
     if dest_profile == profile:
         print("ERROR: Cannot continue with 'start == destination' ! ")
@@ -52,7 +49,12 @@ def main(profile, dest_profile, mfacode):
         exit(1)
 
     try:
-        resp = sts_session_token(aws_session, mfacode, mfa_serial)
+        opts = { "SerialNumber": mfa_serial }
+        if code:
+            opts["TokenCode"] = code
+
+        resp = sts_session_token(aws_session, opts)
+
         r_creds = resp['Credentials']
     except botocore.exceptions.ClientError as clientErr:
         error(clientErr)
@@ -91,12 +93,12 @@ def load_creds(dest_profile: str):
     return creds, backup
 
 
-def sts_session_token(aws_session, mfacode=None, mfa_serial=None):
+def sts_session_token(aws_session, opts):
     """This is where the logic FAILS in botocore.session,
     attributes already part of aws_session isn't passed on to client,
     so we FIX that here"""
     client = aws_session.create_client('sts')
-    return client.get_session_token(SerialNumber=mfa_serial, TokenCode=mfacode)
+    return client.get_session_token(**opts)
 
 
 def attribs_from_raw(raw_credentials):
@@ -137,7 +139,10 @@ if __name__ == "__main__":
         '--dest-profile',
         default=def_dest_profile,
         help=f'Dest profile to write to. "{def_dest_profile}" when unset')
-    parser.add_argument('mfacode')
+
+    parser.add_argument(
+        '-c', '--code',
+        help=f'MFA code from device UNLESS codeless h/w')
 
     args = parser.parse_args()
 
