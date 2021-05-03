@@ -6,6 +6,7 @@ from pathlib import Path
 from enum import Enum
 
 
+# TODO Respect env AWS_SHARED_CREDENTIALS_FILE
 class CFile(Enum):
     CONFIG = (Path.home() / ".aws/config", "profile ")
     CREDS = (Path.home() / ".aws/credentials", "")
