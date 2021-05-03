@@ -14,23 +14,35 @@ from logging import info, error, warning
 from awsconfigparser import CFile, AWSConfParser
 
 # FIXME lookup the python-way (setup_tools)
-VER = "0.0.2"
+VER = "0.0.3"
 SCRIPT_NAME = "yaast.write_session.py"
 HOMEPAGE = "example.com"
 
 logging.basicConfig(level=logging.INFO)
 
+def esc(e_code):
+    return f'\033[{e_code}m'
 
-def main(profile, dest_profile, code):
+def die(errtxt):
+    print(type(errtxt))
+    if type(errtxt) == "string":
+        print(esc(31)+"ERROR:", esc(0) + errtxt)
+    else:
+        print (esc(31)+"ERROR:", esc(0) + str(errtxt))
 
-    print(f"Selected *start* profile [{profile}].")
-    print(f"         *dest*  profile [{dest_profile}].")
+    exit(1)
+
+
+def main(profile, dest_profile, mfacode):
+
+    pr_max = max(len(profile),len(dest_profile))
+    print(esc(34) + "Selected *start* profile:", esc(47)+esc(30) , profile.ljust(pr_max), esc(0))
+    print(esc(34) + "         *dest*  profile:", esc(42)+esc(30) , dest_profile.ljust(pr_max), esc(0))
 
 
     if dest_profile == profile:
-        print("ERROR: Cannot continue with 'start == destination' ! ")
-        exit(1)
-
+        die("Cannot continue with 'start == destination' ! ")
+ 
     #info(f"back {backup}")
 
     aws_session = Session(profile=profile)
@@ -42,25 +54,27 @@ def main(profile, dest_profile, code):
 
     # debug(scopeConfig)
     mfa_serial = scopeConfig.get('mfa_serial')
-    print(f"MFA device = {mfa_serial}")
 
     if not mfa_serial:
-        print(f"NOTE: No 'mfa_serial' in profile [{profile}]")
- 
+        die(f"No 'mfa_serial' in profile [{profile}]")
+        
+    else:
+        print(f"MFA device = {mfa_serial}")
+
 
     try:
-        opts = {}
-        if code:
-            opts["TokenCode"] = code
-        if mfa_serial:
-            opts["SerialNumber"] = mfa_serial
+        opts = {
+            "TokenCode" :  mfacode,
+            "SerialNumber" : mfa_serial
+        }
 
         resp = sts_session_token(aws_session, opts)
-
         r_creds = resp['Credentials']
+    except botocore.exceptions.BotoCoreError as coreErr:
+        die(coreErr)
     except botocore.exceptions.ClientError as clientErr:
-        error(clientErr)
-        exit(1)
+        die(clientErr)
+
 
     info(f"Downloaded new temp/creds. ID = {r_creds['AccessKeyId']}")
     #info(resp)
@@ -143,8 +157,8 @@ if __name__ == "__main__":
         help=f'Dest profile to write to. "{def_dest_profile}" when unset')
 
     parser.add_argument(
-        '-c', '--code',
-        help=f'MFA code from device UNLESS codeless h/w')
+        'mfacode',
+        help=f'MFA code from device')
 
     args = parser.parse_args()
 
