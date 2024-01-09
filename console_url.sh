@@ -1,10 +1,20 @@
 #!/bin/sh
+#
+# ----------------------------------
+#
+#  assume-role and setup signinToken/url
+#  to access AWS console
+#
 
 ROLE_ARN=$1
 
-if [ -z "$ROLE_ARN" ]; then
-	echo "no ROLE_ARN !"
+usage() {
+	echo >&2 "usage: $0 <role_arn>"
 	exit 1
+}
+
+if [ -z "$ROLE_ARN" ]; then
+	usage
 fi
 
 TMP_CREDS_FILE=/tmp/_temp_Credentials.json
