@@ -1,7 +1,5 @@
 # Yaast (Jåst)
 
-
-
 ## YetAnotherAWSSessionTool
 
 *Why?* ..After obtaining a normal accessKey set, 
