@@ -1,5 +1,5 @@
 from . import write_session
-from . import die
+from . import die, APP_META
 import click
 
 
@@ -26,8 +26,19 @@ def mfa(**args):
 
 
 @cli_group.command()
-def console_url(args):
-    """Assume-role and output URL for web console"""
+@click.option("--role-arn", "-r", help="role to assume first")
+@click.option("--tag", "-t", help="tag(s) if role-arn")
+def console_url(**args):
+    """Output URL for web console, assume-role as option"""
+    pass
+
+
+@cli_group.command()
+@click.argument("role_arn")
+@click.option("--tag", "-t", help="tag(s)")
+@click.option("--session-name", "-n", help="name the session", default=APP_META['name'])
+def assume(**args):
+    """just assume role"""
     pass
 
 
