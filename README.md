@@ -28,3 +28,7 @@ Both the *start* and *dest* profiles names can be selected with flags
 
 *DEPENDS* on botocore
 
+## Develop
+
+    make clean deps dist
+    make upload 

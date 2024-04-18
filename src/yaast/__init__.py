@@ -1,9 +1,22 @@
-from . import write_session
+from sys import exit
+#
 
-# yaast.main
-def main():
-    write_session.main(app_meta = {
-        "name" : "yaast",
-        "ver": "0.0.4",
-        "homepage" : "sample.com/yaast"
-    })
+APP_META = {
+    "name": "yaast",
+    "ver": "0.1.x",
+    "homepage": "github.com/dynnamitt/yaast"
+}
+
+def esc(e_code):
+    return f'\033[{e_code}m'
+
+
+def die(errtxt):
+
+    print(type(errtxt))
+    if type(errtxt) == "string":
+        print(esc(31)+"ERROR:", esc(0) + errtxt)
+    else:
+        print(esc(31)+"ERROR:", esc(0) + str(errtxt))
+
+    exit(1)

@@ -1,7 +1,9 @@
+import os
+import unittest
 import configparser
 import logging
 import collections
-from logging import debug,info,error,warning
+from logging import debug, info, error, warning
 from pathlib import Path
 from enum import Enum
 
@@ -11,7 +13,7 @@ class CFile(Enum):
     CONFIG = (Path.home() / ".aws/config", "profile ")
     CREDS = (Path.home() / ".aws/credentials", "")
 
-    def __init__(self, path: Path, header_prefix: str ):
+    def __init__(self, path: Path, header_prefix: str):
         self.path = path
         self.header_prefix = header_prefix
 
@@ -19,8 +21,7 @@ class CFile(Enum):
 class AWSConfParser:
     """Parse and Write to config duo (aka ~/.aws/{config,credentials}) """
 
-
-    def __init__(self, profile:str , cfile: CFile):
+    def __init__(self, profile: str, cfile: CFile):
 
         self._profile = profile
         self._cfile = cfile
@@ -31,14 +32,13 @@ class AWSConfParser:
 
         debug(self._parser.sections())
 
-
     @property
     def exists(self):
         """Does this profile exist here?"""
         return self._profile_header in [s.strip() for s in self._parser.sections()]
 
     # dict emulation
-    def  __getitem__(self, key):
+    def __getitem__(self, key):
         """Helpful since configparser::ConfigParser object hides the dict inside"""
         if self.exists:
             # a true dict prop
@@ -47,13 +47,13 @@ class AWSConfParser:
             return None
 
     # dict emulation
-    def  get(self, key, default=None):
+    def get(self, key, default=None):
         """Helpful since configparser::ConfigParser object hides the dict inside"""
 
         # replace w try (and use __getitem__)
         if self.exists:
             # a true dict prop
-            return self._parser._sections[self._profile_header].get(key,default)
+            return self._parser._sections[self._profile_header].get(key, default)
         else:
             return None
 
@@ -63,7 +63,7 @@ class AWSConfParser:
         def __has_token():
             return self._parser
 
-        if self.exists and backup :
+        if self.exists and backup:
             self.__backup_profile(self._profile_header)
         elif self.exists:
             warning("Skipped backup of existing profile!")
@@ -82,20 +82,19 @@ class AWSConfParser:
         """Make a *_DATETIME backup profile"""
 
         # some algo to makeup a name
-        warning(f"__backup_profile() impl missing still missing. Overwriting: [{filepath}].")
+        warning(
+            f"__backup_profile() impl missing still missing. Overwriting: [{filepath}].")
         pass
 
-
-import unittest
-import os
 
 def file_contents(path):
     with open(path) as f:
         for line in f:
             info(line.strip())
 
+
 class TestStringMethods(unittest.TestCase):
-    TestCFileEnum = collections.namedtuple('_Cfile',("path header_prefix"))
+    TestCFileEnum = collections.namedtuple('_Cfile', ("path header_prefix"))
 
     def test_non_existing_profile(self):
         sut = AWSConfParser("yyy", CFile.CONFIG)
@@ -109,9 +108,9 @@ class TestStringMethods(unittest.TestCase):
         info(vars(sut))
 
     def test_insert(self):
-        testcase = self.__class__.TestCFileEnum("/tmp/py-testfile.ini","")
+        testcase = self.__class__.TestCFileEnum("/tmp/py-testfile.ini", "")
         sut = AWSConfParser("unittest-profile", testcase)
-        #self.assertEqual(sut.exists, False)
+        # self.assertEqual(sut.exists, False)
         sut.set_new_attrs(backup=False, x=1, y="2")
         sut.save()
         file_contents(testcase.path)
@@ -122,4 +121,3 @@ class TestStringMethods(unittest.TestCase):
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
     unittest.main()
-
