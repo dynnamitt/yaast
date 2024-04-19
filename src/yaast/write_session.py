@@ -20,70 +20,66 @@ def_dest_profile = "default"
 
 logging.basicConfig(level=logging.INFO)
 
+
 def esc(e_code):
     return f'\033[{e_code}m'
+
 
 def die(errtxt):
     print(type(errtxt))
     if type(errtxt) == "string":
         print(esc(31)+"ERROR:", esc(0) + errtxt)
     else:
-        print (esc(31)+"ERROR:", esc(0) + str(errtxt))
+        print(esc(31)+"ERROR:", esc(0) + str(errtxt))
 
     exit(1)
 
 
 def write_session(app_meta, profile, dest_profile, mfacode):
 
-    pr_max = max(len(profile),len(dest_profile))
-    print(esc(34) + "Selected *start* profile:", esc(47)+esc(30) , profile.ljust(pr_max), esc(0))
-    print(esc(34) + "         *dest*  profile:", esc(42)+esc(30) , dest_profile.ljust(pr_max), esc(0))
-
+    pr_max = max(len(profile), len(dest_profile))
+    print(esc(34) + "Selected *start* profile:",
+          esc(47)+esc(30), profile.ljust(pr_max), esc(0))
+    print(esc(34) + "         *dest*  profile:", esc(42) +
+          esc(30), dest_profile.ljust(pr_max), esc(0))
 
     if dest_profile == profile:
         die("Cannot continue with 'start == destination' ! ")
- 
-    #info(f"back {backup}")
+
+    # info(f"back {backup}")
 
     aws_session = Session(profile=profile)
 
     creds, backup = load_creds(dest_profile)
 
-
     # useful stuff in botocore:
     scopeConfig = aws_session.get_scoped_config()
-
 
     # debug(scopeConfig)
     mfa_serial = scopeConfig.get('mfa_serial')
 
     if not mfa_serial:
         die(f"No 'mfa_serial' in profile [{profile}]")
-        
+
     else:
         print(f"MFA device = {mfa_serial}")
 
     opts = {
-            "TokenCode" :  mfacode,
-            "SerialNumber" : mfa_serial
-        }
+        "TokenCode":  mfacode,
+        "SerialNumber": mfa_serial
+    }
 
-   
-        
     resp = sts_session_token(aws_session, opts)
     r_creds = resp['Credentials']
 
-   
-
-
     info(f"Downloaded new temp/creds. ID = {r_creds['AccessKeyId']}")
-    #info(resp)
+    # info(resp)
 
     creds.set_new_attrs(backup, **attribs_from_raw(r_creds, app_meta))
 
     edits = creds.save()
-    print( esc(32) + "Wrote edits to file(s) :" ,
-           esc(42)+esc(30) +  str([str(fn.path) for fn in edits]) + esc(0))
+    print(esc(32) + "Wrote edits to file(s) :",
+          esc(42)+esc(30) + str([str(fn.path) for fn in edits]) + esc(0))
 
 
 def load_creds(dest_profile: str):
@@ -135,8 +131,6 @@ def attribs_from_raw(raw_credentials, app_meta):
 
 def main(app_meta):
 
-
-
     parser = argparse.ArgumentParser(app_meta["name"], description=__doc__,
                                      epilog="More details in README.md file")
 
@@ -144,8 +138,7 @@ def main(app_meta):
         '-p',
         '--profile',
         default=def_src_profile,
-        help=
-        f'The profile w/ mfa info and start credentials. "{def_src_profile}" when unset'
+        help=f'The profile w/ mfa info and start credentials. "{def_src_profile}" when unset'
     )
     parser.add_argument(
         '-d',
