@@ -25,6 +25,9 @@ Both the *start* and *dest* profiles names can be selected with flags
 
     yaast [-h] [flags] <mfacode>
 
+    # or from src :
+    python -m src.yaast [-h] [flags] <mfacode>
+
 
 *DEPENDS* on botocore
 
